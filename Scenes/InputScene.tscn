@@ -16,7 +16,9 @@ offset_bottom = 648.0
 layout_mode = 2
 
 [node name="TextEdit" type="TextEdit" parent="VBoxContainer" unique_id=1554889723]
+custom_minimum_size = Vector2(0, 500)
 layout_mode = 2
 
 [node name="Button" type="Button" parent="VBoxContainer" unique_id=129065252]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
