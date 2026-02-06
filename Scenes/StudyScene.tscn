@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://cu24asvn5ix2k"]
+
+[ext_resource type="Script" uid="uid://cqr6he6qbpg83" path="res://Scenes/StudyScene.cs" id="1_mxr53"]
+
+[node name="StudyScene" type="Control" unique_id=1089856083]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mxr53")
+
+[node name="HSplitContainer" type="HSplitContainer" parent="." unique_id=1491899685]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ChapterPanel" type="PanelContainer" parent="HSplitContainer" unique_id=816576439]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HSplitContainer/ChapterPanel" unique_id=662870741]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HSplitContainer/ChapterPanel/ScrollContainer" unique_id=1291589328]
+layout_mode = 2
+
+[node name="ContentPanel" type="PanelContainer" parent="HSplitContainer" unique_id=1878855985]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="HSplitContainer/ContentPanel" unique_id=943480489]
+layout_mode = 2
+
+[node name="ContentText" type="RichTextLabel" parent="HSplitContainer/ContentPanel" unique_id=1086532258]
+layout_mode = 2
