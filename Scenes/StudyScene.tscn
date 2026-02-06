@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cu24asvn5ix2k"]
 
 [ext_resource type="Script" uid="uid://cqr6he6qbpg83" path="res://Scenes/StudyScene.cs" id="1_mxr53"]
+[ext_resource type="Script" uid="uid://5fsnk6xs1ypd" path="res://Scripts/Manager/StudyManager.cs" id="2_hym2t"]
 
 [node name="StudyScene" type="Control" unique_id=1089856083]
 layout_mode = 3
@@ -46,3 +47,7 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+
+[node name="StudyManager" type="Node" parent="." unique_id=962019627]
+script = ExtResource("2_hym2t")
+metadata/_custom_type_script = "uid://5fsnk6xs1ypd"

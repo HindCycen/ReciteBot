@@ -4,26 +4,33 @@ using System.Collections.Generic;
 
 public partial class StudyScene : Control {
 	public override void _Ready() {
-		List<Chapter> _chapters = new List<Chapter> {
-			new Chapter {
-				Title = "导数定义",
-				Content = "导数是函数在某点的变化率..."
-			},
-			new Chapter {
-				Title = "极限思想",
-				Content = "极限描述函数逼近过程..."
-			}
-		};
+        var set = new StudySet {
+            Title = "Test Notes"
+        };
+
+        set.Chapters.Add(new Chapter(
+			"Chapter 1",
+			"Summary of chapter 1"
+		));
+
+		set.Chapters.Add(new Chapter(
+			"Chapter 2",
+			"Summary of chapter 2"
+		));
+
+		StudyManager.Instance.LoadStudySet(set);
+
+		List<Chapter> _chapters = StudyManager.Instance.GetChapters();
 
 		var list = GetNode<VBoxContainer>(
 			"HSplitContainer/ChapterPanel/ScrollContainer/VBoxContainer"
 		);
 
 		foreach (var chapter in _chapters) {
-            var btn = new Button {
-                Text = chapter.Title
-            };
-            btn.Pressed += () => {
+			var btn = new Button {
+				Text = chapter.Title
+			};
+			btn.Pressed += () => {
 				var title = GetNode<Label>(
 					"HSplitContainer/ContentPanel/VBoxContainer/TitleLabel"
 				);
