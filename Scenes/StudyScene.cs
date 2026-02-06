@@ -25,10 +25,10 @@ public partial class StudyScene : Control {
             };
             btn.Pressed += () => {
 				var title = GetNode<Label>(
-					"HSplitContainer/ContentPanel/TitleLabel"
+					"HSplitContainer/ContentPanel/VBoxContainer/TitleLabel"
 				);
 				var content = GetNode<RichTextLabel>(
-					"HSplitContainer/ContentPanel/ContentText"
+					"HSplitContainer/ContentPanel/VBoxContainer/ScrollContainer/ContentText"
 				);
 
 				title.Text = chapter.Title;
