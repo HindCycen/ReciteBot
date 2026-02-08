@@ -12,14 +12,14 @@ Please split the following text into chapters.
 
 For each chapter provide:
 - Title
-- Summary
+- Detailed Content
 
 Return in JSON format like:
 
 [
   {{
     "Title": "...",
-    "Summary": "..."
+    "Content": "..."
   }}
 ]
 
