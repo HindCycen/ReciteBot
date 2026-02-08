@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cu24asvn5ix2k"]
 
-[ext_resource type="Script" uid="uid://cqr6he6qbpg83" path="res://Scenes/StudyScene.cs" id="1_mxr53"]
+[ext_resource type="Script" path="res://Scripts/StudyScene.cs" id="1_mxr53"]
 [ext_resource type="Script" uid="uid://5fsnk6xs1ypd" path="res://Scripts/Manager/StudyManager.cs" id="2_hym2t"]
 
 [node name="StudyScene" type="Control" unique_id=1089856083]
