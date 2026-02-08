@@ -1,0 +1,77 @@
+name: Godot 4.6 Build Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+env:
+  GODOT_VERSION: 4.6
+  EXPORT_NAME: MyGame.exe
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # 1️⃣ 拉代码
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 2️⃣ 缓存 Godot（加速关键）
+    - name: Cache Godot
+      id: cache-godot
+      uses: actions/cache@v4
+      with:
+        path: |
+          godot/
+          ~/.local/share/godot/export_templates/
+        key: godot-${{ env.GODOT_VERSION }}
+
+    # 3️⃣ 下载 Godot（仅在缓存未命中）
+    - name: Download Godot Headless
+      if: steps.cache-godot.outputs.cache-hit != 'true'
+      run: |
+        wget https://downloads.tuxfamily.org/godotengine/${GODOT_VERSION}/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+        unzip Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+        mv Godot_v${GODOT_VERSION}-stable_linux.x86_64 godot
+        chmod +x godot
+
+    # 4️⃣ 下载 Export Templates
+    - name: Install Export Templates
+      if: steps.cache-godot.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+        wget https://downloads.tuxfamily.org/godotengine/${GODOT_VERSION}/Godot_v${GODOT_VERSION}-stable_export_templates.tpz
+        unzip Godot_v${GODOT_VERSION}-stable_export_templates.tpz
+        mv templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
+
+    # 5️⃣ 创建构建目录
+    - name: Prepare build folder
+      run: mkdir -p build/windows
+
+    # 6️⃣ 执行导出测试
+    - name: Export Windows Build
+      run: |
+        ./godot \
+          --headless \
+          --export-release "Windows Desktop" \
+          build/windows/${EXPORT_NAME}
+
+    # 7️⃣ 构建断言（测试是否成功）
+    - name: Verify build
+      run: |
+        if [ -f build/windows/${EXPORT_NAME} ]; then
+          echo "✅ Build succeeded"
+        else
+          echo "❌ Build failed"
+          exit 1
+        fi
+
+    # 8️⃣ 上传 exe 产物
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-build
+        path: build/windows/
