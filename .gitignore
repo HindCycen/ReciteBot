@@ -45,9 +45,6 @@ Thumbs.db
 *.import
 *.reimport
 
-# Godot exported projects
-export_presets.cfg
-
 # Godot temporary files
 .autoload.gd
 .tmp/
