@@ -4,12 +4,10 @@ using System.Diagnostics;
 using System.IO;
 
 public partial class PythonBridge : RefCounted {
-    public static string RunAI(string text)
-    {
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
+    public static string RunAI(string text) {
+        ProcessStartInfo psi = new ProcessStartInfo {
             FileName = "python",
-            Arguments = "api_call.py",
+            Arguments = "Scripts\\PythonScript\\api_call.py",
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -22,10 +20,12 @@ public partial class PythonBridge : RefCounted {
         process.Start();
 
         // 发送文本给 Python
-        using (StreamWriter writer = process.StandardInput)
-        {
+        using (StreamWriter writer = process.StandardInput) {
             writer.Write(text);
         }
+
+        string error = process.StandardError.ReadToEnd();
+        GD.PrintErr("PY ERROR: " + error);
 
         // 读取 AI 返回
         string output = process.StandardOutput.ReadToEnd();

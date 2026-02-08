@@ -9,11 +9,19 @@ public partial class InputScene : Control {
 		var button = GetNode<Button>("VBoxContainer/Button");
 		button.Pressed += () => {
 			string rawText = _textEdit.Text;
-			GD.Print("输入文本长度: " + rawText.Length);
-			// 找到 Main 场景并切换
+
 			var main = GetTree().Root.GetNode<Main>("Main");
 			main.LoadScene("res://Scenes/ProcessingScene.tscn");
+			
+			System.Threading.Tasks.Task.Run( () => {
+				string output = PythonBridge.RunAI(rawText);
+				CallDeferred(nameof(OnAIResult), output);
+			});
 		};
-		
 	}
+
+	private static void OnAIResult(string output) {
+		GD.Print("AI 输出: " + output);
+	}
+
 }
