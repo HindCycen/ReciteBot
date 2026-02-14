@@ -72,6 +72,9 @@ function renderChapters(chapters) {
 
   // 添加编辑事件监听器
   addEditEventListeners();
+
+  // 在章节内容生成后，尝试保存JSON文件
+  saveChaptersToServer(chapters);
 }
 
 // 添加编辑事件监听器
@@ -90,6 +93,40 @@ function handleEdit(event) {
 
   // 这里可以添加保存逻辑，例如更新本地数据或发送到服务器
   console.log(`编辑章节 ${index + 1} 的 ${field}:`, value);
+}
+
+// 保存章节数据到服务器
+async function saveChaptersToServer(chapters) {
+  try {
+    // 获取书籍名称
+    const bookNameInput = document.getElementById("bookName");
+    const bookName = bookNameInput?.value.trim() || "未命名书籍";
+
+    // 准备要保存的数据
+    const saveData = {
+      bookName: bookName,
+      chapters: chapters,
+    };
+
+    // 发送请求到后端保存API
+    const response = await fetch("/api/save-book", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(saveData),
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      console.log("书籍已成功保存:", result.message);
+    } else {
+      console.error("保存失败:", result.error || "未知错误");
+    }
+  } catch (error) {
+    console.error("保存请求失败:", error);
+  }
 }
 
 // HTML转义函数，防止XSS攻击
