@@ -2,6 +2,7 @@ import subprocess
 import sys
 import os
 import json
+import glob
 from flask import request, jsonify
 
 # 添加项目根目录到Python路径
@@ -108,3 +109,67 @@ def save_book():
     except Exception as e:
         print(f"保存书籍失败: {e}", file=sys.stderr)
         return jsonify({'error': '保存失败'}), 500
+
+
+def get_books_list():
+    """获取书籍列表的API端点"""
+    try:
+        # 查找所有.json文件
+        json_files = glob.glob(os.path.join(user_dir, "*.json"))
+
+        books = []
+        for file_path in json_files:
+            filename = os.path.basename(file_path)
+            book_name = os.path.splitext(filename)[0]  # 移除.json扩展名
+
+            # 获取文件修改时间
+            mod_time = os.path.getmtime(file_path)
+            from datetime import datetime
+            mod_date = datetime.fromtimestamp(mod_time).strftime(
+                '%Y-%m-%d %H:%M')
+
+            books.append({
+                'name': book_name,
+                'filename': filename,
+                'modified': mod_date
+            })
+
+        # 按修改时间倒序排列
+        books.sort(key=lambda x: x['modified'], reverse=True)
+
+        return jsonify(books)
+
+    except Exception as e:
+        print(f"获取书籍列表失败: {e}", file=sys.stderr)
+        return jsonify({'error': '获取书籍列表失败'}), 500
+
+
+def get_book_content(filename):
+    """获取指定书籍内容的API端点"""
+    try:
+        # 验证文件名安全性
+        if not filename.endswith('.json'):
+            return jsonify({'error': '无效的文件格式'}), 400
+
+        # 防止路径遍历攻击
+        safe_filename = os.path.basename(filename)
+        file_path = os.path.join(user_dir, safe_filename)
+
+        # 检查文件是否存在
+        if not os.path.exists(file_path):
+            return jsonify({'error': '书籍不存在'}), 404
+
+        # 读取文件内容
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = json.load(f)
+
+        return jsonify({
+            'name': os.path.splitext(safe_filename)[0],
+            'content': content
+        })
+
+    except json.JSONDecodeError:
+        return jsonify({'error': '书籍文件格式错误'}), 500
+    except Exception as e:
+        print(f"读取书籍内容失败: {e}", file=sys.stderr)
+        return jsonify({'error': '读取书籍内容失败'}), 500

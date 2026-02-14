@@ -29,3 +29,31 @@ export async function processText(text) {
   }
   return response.json();
 }
+
+export async function getBooksList() {
+  const response = await fetch(`${API_BASE}/api/books`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || "获取书籍列表失败");
+  }
+  return response.json();
+}
+
+export async function getBookContent(filename) {
+  const response = await fetch(`${API_BASE}/api/book/${filename}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || "获取书籍内容失败");
+  }
+  return response.json();
+}

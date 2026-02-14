@@ -7,7 +7,7 @@ backend_dir = os.path.dirname(os.path.abspath(__file__))
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-from routes.api import process_text, save_book
+from routes.api import process_text, save_book, get_books_list, get_book_content
 from routes.static import serve_index, serve_static
 
 
@@ -18,6 +18,10 @@ def create_app():
     # 注册API路由
     app.add_url_rule('/api/process', view_func=process_text, methods=['POST'])
     app.add_url_rule('/api/save-book', view_func=save_book, methods=['POST'])
+    app.add_url_rule('/api/books', view_func=get_books_list, methods=['GET'])
+    app.add_url_rule('/api/book/<filename>',
+                     view_func=get_book_content,
+                     methods=['GET'])
 
     # 注册静态文件路由
     app.add_url_rule('/', view_func=serve_index, methods=['GET'])

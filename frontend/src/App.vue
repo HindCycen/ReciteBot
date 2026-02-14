@@ -21,7 +21,7 @@
           ></textarea>
         </div>
 
-        <div class="flex justify-center">
+        <div class="flex justify-center space-x-4">
           <button
             @click="processText"
             :disabled="processing || !inputText.trim()"
@@ -29,6 +29,13 @@
             type="button"
           >
             {{ processing ? "处理中..." : "提交给AI处理" }}
+          </button>
+          <button
+            @click="goToBookList"
+            class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg transition-colors duration-200"
+            type="button"
+          >
+            我的书籍
           </button>
         </div>
 
@@ -103,8 +110,22 @@
           >
             返回编辑文本
           </button>
+          <button
+            @click="goToBookList"
+            class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg transition-colors duration-200"
+            type="button"
+          >
+            我的书籍
+          </button>
         </div>
       </div>
+
+      <!-- 书籍列表页面 -->
+      <BookList
+        v-else-if="currentPage === 'book-list'"
+        @load-book="loadBookContent"
+        @go-back="goBackToInput"
+      />
     </div>
   </div>
 </template>
@@ -112,7 +133,8 @@
 <script setup>
 import { ref } from "vue";
 import ChapterCard from "./components/ChapterCard.vue";
-import { saveBook } from "./api";
+import BookList from "./components/BookList.vue";
+import { saveBook, getBookContent } from "./api";
 
 // 页面状态
 const currentPage = ref("input");
@@ -203,5 +225,22 @@ const handleSave = async () => {
 // 返回文本输入页面
 const goBackToInput = () => {
   currentPage.value = "input";
+};
+
+// 跳转到书籍列表页面
+const goToBookList = () => {
+  currentPage.value = "book-list";
+};
+
+// 加载指定书籍的内容
+const loadBookContent = async (filename) => {
+  try {
+    const bookData = await getBookContent(filename);
+    bookName.value = bookData.name;
+    chapters.value = bookData.content;
+    currentPage.value = "editor";
+  } catch (err) {
+    alert("加载书籍失败：" + err.message);
+  }
 };
 </script>
