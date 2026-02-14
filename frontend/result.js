@@ -46,6 +46,11 @@ function initPage() {
   document.getElementById("saveBtn").addEventListener("click", function () {
     saveCurrentData();
   });
+
+  // 为添加章节按钮添加点击事件
+  document.getElementById("addChapterBtn").addEventListener("click", function () {
+    addNewChapter();
+  });
 }
 
 // 渲染章节内容
@@ -61,6 +66,9 @@ function renderChapters(chapters) {
   chapters.forEach((chapter, index) => {
     html += `
             <div class="chapter" data-index="${index}">
+                <div class="chapter-actions">
+                    <button class="delete-chapter-btn" data-index="${index}">×</button>
+                </div>
                 <div class="chapter-title">
                     <input type="text" class="chapter-title-input" value="${escapeHtml(chapter.Title)}" 
                            data-field="title" data-index="${index}" placeholder="章节标题">
@@ -75,18 +83,27 @@ function renderChapters(chapters) {
 
   container.innerHTML = html;
 
-  // 添加编辑事件监听器
-  addEditEventListeners();
-
-  // 移除自动保存调用
-  // saveChaptersToServer(chapters);
+  // 添加编辑事件监听器（使用事件委托处理动态元素）
+  setupEventListeners();
 }
 
-// 添加编辑事件监听器
-function addEditEventListeners() {
-  const inputs = document.querySelectorAll("[data-field]");
-  inputs.forEach((input) => {
-    input.addEventListener("input", handleEdit);
+// 设置事件监听器（使用事件委托）
+function setupEventListeners() {
+  const container = document.getElementById("chaptersContainer");
+  
+  // 编辑事件委托
+  container.addEventListener("input", function(event) {
+    if (event.target.dataset.field) {
+      handleEdit(event);
+    }
+  });
+  
+  // 删除按钮事件委托
+  container.addEventListener("click", function(event) {
+    if (event.target.classList.contains("delete-chapter-btn")) {
+      const index = parseInt(event.target.dataset.index);
+      deleteChapter(index);
+    }
   });
 }
 
@@ -98,6 +115,86 @@ function handleEdit(event) {
 
   // 这里可以添加保存逻辑，例如更新本地数据或发送到服务器
   console.log(`编辑章节 ${index + 1} 的 ${field}:`, value);
+}
+
+// 添加新章节
+function addNewChapter() {
+  const container = document.getElementById("chaptersContainer");
+  
+  // 移除"暂无章节数据"提示（如果存在）
+  const noDataElement = container.querySelector(".no-data");
+  if (noDataElement) {
+    noDataElement.remove();
+  }
+  
+  // 获取当前章节数量以确定新章节的索引
+  const currentChapters = container.querySelectorAll(".chapter");
+  const newIndex = currentChapters.length;
+  
+  // 创建新章节HTML
+  const newChapterHtml = `
+    <div class="chapter" data-index="${newIndex}">
+        <div class="chapter-actions">
+            <button class="delete-chapter-btn" data-index="${newIndex}">×</button>
+        </div>
+        <div class="chapter-title">
+            <input type="text" class="chapter-title-input" value="新章节 ${newIndex + 1}" 
+                   data-field="title" data-index="${newIndex}" placeholder="章节标题">
+        </div>
+        <div class="chapter-content">
+            <textarea class="chapter-content-textarea" data-field="content" 
+                      data-index="${newIndex}" placeholder="章节内容"></textarea>
+        </div>
+    </div>
+  `;
+  
+  container.insertAdjacentHTML('beforeend', newChapterHtml);
+  
+  // 由于使用了事件委托，不需要重新绑定事件
+}
+
+// 删除章节
+function deleteChapter(indexToDelete) {
+  const container = document.getElementById("chaptersContainer");
+  const chapterToRemove = container.querySelector(`.chapter[data-index="${indexToDelete}"]`);
+  
+  if (chapterToRemove) {
+    chapterToRemove.remove();
+    
+    // 检查是否还有章节，如果没有则显示"暂无章节数据"
+    const remainingChapters = container.querySelectorAll(".chapter");
+    if (remainingChapters.length === 0) {
+      container.innerHTML = '<div class="no-data">暂无章节数据</div>';
+      return;
+    }
+    
+    // 重新索引剩余的章节（可选，但为了数据一致性建议这样做）
+    reindexChapters();
+  }
+}
+
+// 重新索引章节（更新data-index属性）
+function reindexChapters() {
+  const container = document.getElementById("chaptersContainer");
+  const chapters = container.querySelectorAll(".chapter");
+  
+  chapters.forEach((chapter, newIndex) => {
+    chapter.dataset.index = newIndex;
+    
+    // 更新内部元素的data-index属性
+    const titleInput = chapter.querySelector(".chapter-title-input");
+    const contentTextarea = chapter.querySelector(".chapter-content-textarea");
+    const deleteBtn = chapter.querySelector(".delete-chapter-btn");
+    
+    if (titleInput) titleInput.dataset.index = newIndex;
+    if (contentTextarea) contentTextarea.dataset.index = newIndex;
+    if (deleteBtn) deleteBtn.dataset.index = newIndex;
+    
+    // 更新章节标题（可选）
+    if (titleInput && !titleInput.value.trim()) {
+      titleInput.value = `章节 ${newIndex + 1}`;
+    }
+  });
 }
 
 // 获取当前编辑后的数据
@@ -133,6 +230,12 @@ function getCurrentData() {
 async function saveCurrentData() {
   try {
     const currentData = getCurrentData();
+    
+    // 检查是否有章节数据
+    if (currentData.chapters.length === 0) {
+      alert("请至少添加一个章节后再保存！");
+      return;
+    }
 
     // 发送请求到后端保存API
     const response = await fetch("/api/save-book", {
