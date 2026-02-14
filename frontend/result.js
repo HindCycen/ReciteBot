@@ -41,6 +41,11 @@ function initPage() {
   document.getElementById("returnBtn").addEventListener("click", function () {
     window.history.back();
   });
+
+  // 为保存按钮添加点击事件
+  document.getElementById("saveBtn").addEventListener("click", function () {
+    saveCurrentData();
+  });
 }
 
 // 渲染章节内容
@@ -73,8 +78,8 @@ function renderChapters(chapters) {
   // 添加编辑事件监听器
   addEditEventListeners();
 
-  // 在章节内容生成后，尝试保存JSON文件
-  saveChaptersToServer(chapters);
+  // 移除自动保存调用
+  // saveChaptersToServer(chapters);
 }
 
 // 添加编辑事件监听器
@@ -95,7 +100,66 @@ function handleEdit(event) {
   console.log(`编辑章节 ${index + 1} 的 ${field}:`, value);
 }
 
-// 保存章节数据到服务器
+// 获取当前编辑后的数据
+function getCurrentData() {
+  const bookNameInput = document.getElementById("bookName");
+  const bookName = bookNameInput?.value.trim() || "未命名书籍";
+
+  const chapters = [];
+  const chapterElements = document.querySelectorAll(".chapter");
+
+  chapterElements.forEach((chapterEl, index) => {
+    const titleInput = chapterEl.querySelector(".chapter-title-input");
+    const contentTextarea = chapterEl.querySelector(
+      ".chapter-content-textarea",
+    );
+
+    const title = titleInput?.value.trim() || `章节 ${index + 1}`;
+    const content = contentTextarea?.value.trim() || "";
+
+    chapters.push({
+      Title: title,
+      Content: content,
+    });
+  });
+
+  return {
+    bookName: bookName,
+    chapters: chapters,
+  };
+}
+
+// 保存当前数据到服务器
+async function saveCurrentData() {
+  try {
+    const currentData = getCurrentData();
+
+    // 发送请求到后端保存API
+    const response = await fetch("/api/save-book", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(currentData),
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      console.log("书籍已成功保存:", result.message);
+      // 可以在这里添加用户提示，比如显示成功消息
+      alert("书籍已成功保存为: " + result.message.split("为 ")[1]);
+    } else {
+      console.error("保存失败:", result.error || "未知错误");
+      alert("保存失败: " + (result.error || "未知错误"));
+    }
+  } catch (error) {
+    console.error("保存请求失败:", error);
+    alert("保存请求失败，请检查网络连接");
+  }
+}
+
+// 保存章节数据到服务器（保留原有函数，但不再自动调用）
 async function saveChaptersToServer(chapters) {
   try {
     // 获取书籍名称

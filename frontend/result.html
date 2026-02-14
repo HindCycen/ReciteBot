@@ -128,13 +128,16 @@
         box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
       }
 
+      .button-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 30px;
+      }
+
+      .save-btn,
       .return-btn {
-        display: block;
-        width: 200px;
-        margin: 30px auto 0;
         padding: 14px 28px;
-        background-color: #7f8c8d;
-        color: white;
         border: none;
         border-radius: 8px;
         cursor: pointer;
@@ -144,6 +147,27 @@
         transition:
           background-color 0.3s ease,
           transform 0.2s ease;
+      }
+
+      .save-btn {
+        background-color: #3498db;
+        color: white;
+        width: 150px;
+      }
+
+      .save-btn:hover {
+        background-color: #2980b9;
+        transform: translateY(-2px);
+      }
+
+      .save-btn:active {
+        transform: translateY(0);
+      }
+
+      .return-btn {
+        background-color: #7f8c8d;
+        color: white;
+        width: 150px;
       }
 
       .return-btn:hover {
@@ -177,7 +201,10 @@
         <div class="no-data">暂无章节数据</div>
       </div>
 
-      <button class="return-btn" id="returnBtn">返回</button>
+      <div class="button-container">
+        <button class="save-btn" id="saveBtn">保存到文件</button>
+        <button class="return-btn" id="returnBtn">返回</button>
+      </div>
     </div>
 
     <script src="result.js"></script>
