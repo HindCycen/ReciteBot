@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import subprocess
 import sys
 import os
@@ -55,13 +55,16 @@ def process_text():
 
 
 @app.route('/')
-def serve_frontend():
-    """提供前端页面"""
-    return app.send_static_file('index.html')
+def serve_index():
+    """提供前端index.html页面"""
+    return send_from_directory('../frontend', 'index.html')
+
+
+@app.route('/<path:filename>')
+def serve_static(filename):
+    """提供前端其他静态文件"""
+    return send_from_directory('../frontend', filename)
 
 
 if __name__ == '__main__':
-    # 配置静态文件和模板目录
-    app.static_folder = '../frontend'
-    app.template_folder = '../frontend'
     app.run(host='0.0.0.0', port=9178, debug=True)

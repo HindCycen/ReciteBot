@@ -36,7 +36,8 @@ async function processText() {
     }
 
     const result = await response.json();
-    displayResult(result);
+    // 不再显示JSON，而是跳转到result.html页面
+    redirectToResultPage(result);
   } catch (error) {
     console.error("处理失败:", error);
     showError("处理失败: " + error.message);
@@ -47,17 +48,11 @@ async function processText() {
   }
 }
 
-function displayResult(result) {
-  const resultDiv = document.getElementById("result");
-  try {
-    // 格式化JSON输出以便阅读
-    const formattedResult = JSON.stringify(result, null, 2);
-    resultDiv.textContent = formattedResult;
-    resultDiv.style.display = "block";
-  } catch (e) {
-    resultDiv.textContent = JSON.stringify(result);
-    resultDiv.style.display = "block";
-  }
+function redirectToResultPage(result) {
+  // 将结果数据编码为URL参数
+  const encodedData = encodeURIComponent(JSON.stringify(result));
+  // 跳转到result.html并传递数据
+  window.location.href = `result.html?data=${encodedData}`;
 }
 
 function showError(message) {

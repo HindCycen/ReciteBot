@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReciteBot - 结果展示</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f8f9fa;
+        color: #333;
+      }
+
+      .container {
+        background-color: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 25px;
+        font-size: 28px;
+      }
+
+      .book-title-section {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #eee;
+      }
+
+      .book-title-section label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 16px;
+      }
+
+      #bookName {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+      }
+
+      #bookName:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+      }
+
+      .chapter {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+        border-left: 4px solid #3498db;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+
+      .chapter:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .chapter-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .chapter-title-input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        font-size: 18px;
+        font-weight: 600;
+        background-color: white;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+      }
+
+      .chapter-title-input:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+      }
+
+      .chapter-content {
+        font-size: 15px;
+        line-height: 1.6;
+        color: #555;
+      }
+
+      .chapter-content-textarea {
+        width: 100%;
+        min-height: 150px;
+        padding: 15px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 15px;
+        line-height: 1.6;
+        resize: vertical;
+        font-family: inherit;
+        background-color: white;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+      }
+
+      .chapter-content-textarea:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+      }
+
+      .return-btn {
+        display: block;
+        width: 200px;
+        margin: 30px auto 0;
+        padding: 14px 28px;
+        background-color: #7f8c8d;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        text-align: center;
+        transition:
+          background-color 0.3s ease,
+          transform 0.2s ease;
+      }
+
+      .return-btn:hover {
+        background-color: #95a5a6;
+        transform: translateY(-2px);
+      }
+
+      .return-btn:active {
+        transform: translateY(0);
+      }
+
+      .no-data {
+        text-align: center;
+        color: #7f8c8d;
+        font-style: italic;
+        padding: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>ReciteBot - 结果展示</h1>
+
+      <div class="book-title-section">
+        <label for="bookName">书籍标题:</label>
+        <input type="text" id="bookName" placeholder="请输入书籍标题..." />
+      </div>
+
+      <div id="chaptersContainer">
+        <!-- 章节内容将在这里动态生成 -->
+        <div class="no-data">暂无章节数据</div>
+      </div>
+
+      <button class="return-btn" id="returnBtn">返回</button>
+    </div>
+
+    <script src="result.js"></script>
+  </body>
+</html>
