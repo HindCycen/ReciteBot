@@ -7,17 +7,21 @@
         <h3 class="text-lg font-semibold text-gray-800">
           {{ chapter.Title }}
         </h3>
-        <p v-if="chapter.added_at" class="text-xs text-gray-500 mt-1">
+        <p class="text-xs text-gray-500 mt-1">
           添加于: {{ formatDate(chapter.added_at) }}
+        </p>
+        <p v-if="chapter.review_count > 0" class="text-xs text-gray-600 mt-1">
+          已复习 {{ chapter.review_count }} 次 | 下次复习:
+          {{ formatDate(chapter.next_review_at) }}
         </p>
       </div>
       <button
-        @click="removeFromReciteList"
-        class="px-3 py-1 rounded text-sm font-medium transition-colors whitespace-nowrap ml-2 bg-red-500 hover:bg-red-600 text-white"
-        title="移除"
-        :disabled="isRemoving"
+        @click="markAsMemorized"
+        class="px-3 py-1 rounded text-sm font-medium transition-colors whitespace-nowrap ml-2 bg-green-500 hover:bg-green-600 text-white"
+        title="标记为背过了"
+        :disabled="isUpdating"
       >
-        {{ isRemoving ? "移除中..." : "✕ 移除" }}
+        {{ isUpdating ? "处理中..." : "✓ 背过了" }}
       </button>
     </div>
     <p class="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
@@ -40,9 +44,9 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["remove-chapter"]);
+const emit = defineEmits(["memorized"]);
 
-const isRemoving = ref(false);
+const isUpdating = ref(false);
 
 // 格式化日期
 const formatDate = (dateString) => {
@@ -54,19 +58,38 @@ const formatDate = (dateString) => {
   }
 };
 
-// 从背诵列表移除
-const removeFromReciteList = async () => {
-  if (isRemoving.value) return;
+// 标记为背过了
+const markAsMemorized = async () => {
+  if (isUpdating.value) return;
 
-  if (!window.confirm("确认要移除这个章节吗？")) {
-    return;
-  }
-
-  isRemoving.value = true;
+  isUpdating.value = true;
   try {
-    emit("remove-chapter", props.bookName, props.chapter.Title);
+    const response = await fetch("/api/recite-list/memorized", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        book_name: props.bookName,
+        chapter_title: props.chapter.Title,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "标记失败");
+    }
+
+    const result = await response.json();
+    alert(`已标记为背过了！下次复习时间: ${formatDate(result.next_review_at)}`);
+
+    // 通知父组件刷新列表
+    emit("memorized");
+  } catch (err) {
+    console.error("标记章节失败:", err);
+    alert("标记失败: " + err.message);
   } finally {
-    isRemoving.value = false;
+    isUpdating.value = false;
   }
 };
 </script>

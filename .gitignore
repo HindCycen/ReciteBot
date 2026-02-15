@@ -75,3 +75,6 @@ htmlcov/
 
 # User data
 user/
+
+#Python test files
+test*.py

@@ -253,6 +253,22 @@ def get_recite_list():
         return jsonify({"error": "获取背诵列表失败"}), 500
 
 
+# 艾宾浩斯遗忘曲线复习间隔（天数）
+EBBINGHAUS_INTERVALS = [1, 3, 7, 15, 30]
+
+
+def _calculate_next_review_time(review_count):
+    """根据复习次数计算下一次复习时间"""
+    from datetime import datetime, timedelta
+
+    if review_count < len(EBBINGHAUS_INTERVALS):
+        days = EBBINGHAUS_INTERVALS[review_count]
+    else:
+        days = EBBINGHAUS_INTERVALS[-1]  # 最后间隔固定为30天
+
+    return (datetime.now() + timedelta(days=days)).isoformat()
+
+
 def add_to_recite_list():
     """添加章节到背诵列表的API端点"""
     try:
@@ -274,12 +290,16 @@ def add_to_recite_list():
 
         # 检查是否已经存在
         if not any(item.get("id") == item_id for item in recite_list):
+            now = __import__("datetime").datetime.now().isoformat()
             recite_list.append(
                 {
                     "id": item_id,
                     "book_name": book_name,
                     "chapter_title": chapter_title,
-                    "added_at": __import__("datetime").datetime.now().isoformat(),
+                    "added_at": now,
+                    "review_count": 0,
+                    "last_reviewed_at": None,
+                    "next_review_at": now,
                 }
             )
             _save_recite_list(recite_list)
@@ -321,8 +341,145 @@ def remove_from_recite_list():
         return jsonify({"error": "移除失败"}), 500
 
 
+def mark_chapter_as_memorized():
+    """标记章节为"背过了"，使用艾宾浩斯遗忘曲线计划下次复习时间"""
+    try:
+        data = request.get_json()
+        if not data or "book_name" not in data or "chapter_title" not in data:
+            return jsonify({"error": "缺少书籍名称或章节标题"}), 400
+
+        book_name = data["book_name"].strip()
+        chapter_title = data["chapter_title"].strip()
+
+        if not book_name or not chapter_title:
+            return jsonify({"error": "书籍名称和章节标题不能为空"}), 400
+
+        # 加载现有的背诵列表
+        recite_list = _load_recite_list()
+
+        # 创建唯一标识
+        item_id = f"{book_name}:{chapter_title}"
+
+        # 找到并更新该项
+        from datetime import datetime
+
+        for item in recite_list:
+            if item.get("id") == item_id:
+                # 增加复习次数
+                item["review_count"] = item.get("review_count", 0) + 1
+                # 更新最后复习时间
+                item["last_reviewed_at"] = datetime.now().isoformat()
+                # 根据艾宾浩斯曲线计算下次复习时间
+                item["next_review_at"] = _calculate_next_review_time(
+                    item["review_count"]
+                )
+                _save_recite_list(recite_list)
+                return jsonify(
+                    {
+                        "success": True,
+                        "message": "已标记为背过，下次复习时间已更新",
+                        "next_review_at": item["next_review_at"],
+                        "review_count": item["review_count"],
+                    }
+                )
+
+        return jsonify({"error": "章节不存在"}), 404
+
+    except Exception as e:
+        print(f"标记章节失败: {e}", file=sys.stderr)
+        return jsonify({"error": "标记失败"}), 500
+
+
 def get_reciting_chapters():
-    """获取所有背诵中的章节及其内容的API端点"""
+    """获取所有应该背诵的章节及其内容的API端点（根据艾宾浩斯遗忘曲线过滤）"""
+    try:
+        from datetime import datetime
+
+        # 加载背诵列表
+        recite_list = _load_recite_list()
+
+        # 获取当前时间
+        now = datetime.now()
+
+        # 按书籍名分组
+        books_chapters = {}
+
+        for item in recite_list:
+            book_name = item.get("book_name")
+            chapter_title = item.get("chapter_title")
+
+            if not book_name or not chapter_title:
+                continue
+
+            # 检查是否应该现在复习（next_review_at <= 当前时间）
+            next_review_at_str = item.get("next_review_at")
+            if next_review_at_str:
+                try:
+                    next_review_at = datetime.fromisoformat(next_review_at_str)
+                    if next_review_at > now:
+                        # 还不到复习时间，跳过
+                        continue
+                except (ValueError, TypeError):
+                    pass
+
+            # 尝试从文件中读取章节内容
+            safe_book_name = "".join(
+                c for c in book_name if c.isalnum() or c in (" ", "-", "_")
+            ).rstrip()
+            if not safe_book_name:
+                safe_book_name = "unnamed_book"
+
+            file_path = os.path.join(user_dir, f"{safe_book_name}.json")
+
+            try:
+                if not os.path.exists(file_path):
+                    continue
+
+                with open(file_path, "r", encoding="utf-8") as f:
+                    chapters = json.load(f)
+
+                # 查找匹配的章节
+                for chapter in chapters:
+                    if (
+                        isinstance(chapter, dict)
+                        and chapter.get("Title") == chapter_title
+                    ):
+                        if book_name not in books_chapters:
+                            books_chapters[book_name] = []
+
+                        books_chapters[book_name].append(
+                            {
+                                "Title": chapter.get("Title"),
+                                "Content": chapter.get("Content"),
+                                "added_at": item.get("added_at"),
+                                "review_count": item.get("review_count", 0),
+                                "last_reviewed_at": item.get("last_reviewed_at"),
+                                "next_review_at": item.get("next_review_at"),
+                            }
+                        )
+                        break
+            except (json.JSONDecodeError, IOError):
+                continue
+
+        # 转换为列表格式
+        result = []
+        for book_name, chapters in books_chapters.items():
+            result.append(
+                {
+                    "book_name": book_name,
+                    "chapters": chapters,
+                }
+            )
+
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"获取背诵章节失败: {e}", file=sys.stderr)
+        return jsonify({"error": "获取背诵章节失败"}), 500
+
+
+def get_all_reciting_chapters():
+    """获取所有正在背诵的章节（包括还未到复习时间的）"""
     try:
         # 加载背诵列表
         recite_list = _load_recite_list()
@@ -367,6 +524,9 @@ def get_reciting_chapters():
                                 "Title": chapter.get("Title"),
                                 "Content": chapter.get("Content"),
                                 "added_at": item.get("added_at"),
+                                "review_count": item.get("review_count", 0),
+                                "last_reviewed_at": item.get("last_reviewed_at"),
+                                "next_review_at": item.get("next_review_at"),
                             }
                         )
                         break
@@ -386,5 +546,5 @@ def get_reciting_chapters():
         return jsonify(result)
 
     except Exception as e:
-        print(f"获取背诵章节失败: {e}", file=sys.stderr)
-        return jsonify({"error": "获取背诵章节失败"}), 500
+        print(f"获取所有背诵章节失败: {e}", file=sys.stderr)
+        return jsonify({"error": "获取所有背诵章节失败"}), 500
