@@ -51,7 +51,12 @@ jobs:
           mkdir -p build
           cp -r backend build/
           cp -r frontend/dist build/frontend
-          cp -r user build/
+          if [ -d "user" ]; then
+            cp -r user build/
+          else
+            mkdir -p build/user
+            echo "Created empty user directory"
+          fi
           cp start_prod.py build/
           cp environment.yml build/
           cp -r .venv build/ 2>/dev/null || echo "No .venv found"
@@ -125,7 +130,12 @@ jobs:
           if (-not (Test-Path "build")) { New-Item -ItemType Directory -Path "build" -Force | Out-Null }
           Copy-Item -Path "backend" -Destination "build\backend" -Recurse
           Copy-Item -Path "frontend\dist" -Destination "build\frontend" -Recurse
-          Copy-Item -Path "user" -Destination "build\user" -Recurse
+          if (Test-Path "user") {
+            Copy-Item -Path "user" -Destination "build\user" -Recurse
+          } else {
+            New-Item -ItemType Directory -Path "build\user" -Force | Out-Null
+            Write-Output "Created empty user directory"
+          }
           Copy-Item -Path "start_prod.py" -Destination "build\"
           Copy-Item -Path "environment.yml" -Destination "build\"
           Get-ChildItem build -Recurse
