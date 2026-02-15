@@ -13,17 +13,17 @@ import signal
 def build_frontend():
     """构建前端应用"""
     print("🏗️  构建前端应用...")
-    frontend_dir = os.path.join(os.path.dirname(__file__), 'frontend')
+    frontend_dir = os.path.join(os.path.dirname(__file__), "frontend")
     os.chdir(frontend_dir)
 
     # 检查是否安装了依赖
-    if not os.path.exists('node_modules'):
+    if not os.path.exists("node_modules"):
         print("📦 安装前端依赖...")
-        subprocess.run(['npm', 'install'], check=True)
+        subprocess.run(["npm", "install"], check=True)
 
     # 构建前端
     print("🔨 执行构建...")
-    result = subprocess.run(['npm', 'run', 'build'], check=True)
+    result = subprocess.run(["npm", "run", "build"], check=True)
     if result.returncode == 0:
         print("✅ 前端构建成功！")
     else:
@@ -36,14 +36,16 @@ def build_frontend():
 def run_server():
     """启动集成的Flask服务器"""
     print("🚀 启动集成服务器...")
-    backend_dir = os.path.join(os.path.dirname(__file__), 'backend')
+    backend_dir = os.path.join(os.path.dirname(__file__), "backend")
     os.chdir(backend_dir)
 
     # 启动Flask服务器
-    server_process = subprocess.Popen([sys.executable, 'app.py'],
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE,
-                                      text=True)
+    server_process = subprocess.Popen(
+        [sys.executable, "app.py"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
 
     print("✅ 集成服务器已启动 (http://localhost:9178)")
     return server_process
@@ -52,7 +54,7 @@ def run_server():
 def signal_handler(signum, frame):
     """处理中断信号"""
     print("\n🛑 正在停止服务器...")
-    if 'server_process' in globals():
+    if "server_process" in globals():
         server_process.terminate()
     print("👋 服务器已停止")
     sys.exit(0)
@@ -91,5 +93,5 @@ def main():
         signal_handler(None, None)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

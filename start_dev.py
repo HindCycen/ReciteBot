@@ -15,19 +15,18 @@ from threading import Thread
 def run_frontend():
     """启动前端Vite开发服务器"""
     print("🚀 启动前端开发服务器...")
-    frontend_dir = os.path.join(os.path.dirname(__file__), 'frontend')
+    frontend_dir = os.path.join(os.path.dirname(__file__), "frontend")
     os.chdir(frontend_dir)
 
     # 检查是否安装了依赖
-    if not os.path.exists('node_modules'):
+    if not os.path.exists("node_modules"):
         print("📦 安装前端依赖...")
-        subprocess.run(['npm', 'install'], check=True)
+        subprocess.run(["npm", "install"], check=True)
 
     # 启动Vite开发服务器
-    frontend_process = subprocess.Popen(['npm', 'run', 'dev'],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        text=True)
+    frontend_process = subprocess.Popen(
+        ["npm", "run", "dev"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
 
     # 等待前端服务器启动
     time.sleep(2)
@@ -39,14 +38,16 @@ def run_frontend():
 def run_backend():
     """启动后端Flask服务器"""
     print("🚀 启动后端服务器...")
-    backend_dir = os.path.join(os.path.dirname(__file__), 'backend')
+    backend_dir = os.path.join(os.path.dirname(__file__), "backend")
     os.chdir(backend_dir)
 
     # 启动Flask开发服务器
-    backend_process = subprocess.Popen([sys.executable, 'app.py'],
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE,
-                                       text=True)
+    backend_process = subprocess.Popen(
+        [sys.executable, "app.py"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
 
     # 等待后端服务器启动
     time.sleep(2)
@@ -58,9 +59,9 @@ def run_backend():
 def signal_handler(signum, frame):
     """处理中断信号"""
     print("\n🛑 正在停止所有服务...")
-    if 'frontend_thread' in globals():
+    if "frontend_thread" in globals():
         frontend_process.terminate()
-    if 'backend_thread' in globals():
+    if "backend_thread" in globals():
         backend_process.terminate()
     print("👋 所有服务已停止")
     sys.exit(0)
@@ -104,5 +105,5 @@ def main():
         signal_handler(None, None)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

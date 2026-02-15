@@ -37,19 +37,22 @@ Text:
 def process_text(prompt: str) -> str | None:
     response = client.chat.completions.create(
         model="deepseek-chat",
-        messages=[{
-            "role":
-            "system",
-            "content":
-            "You are an assistant that organizes study materials."
-        }, {
-            "role": "user",
-            "content": prompt
-        }],
+        messages=[
+            {
+                "role": "system",
+                "content":
+                "You are an assistant that organizes study materials.",
+            },
+            {
+                "role": "user",
+                "content": prompt
+            },
+        ],
         max_tokens=8192,
         temperature=0.7,
         stream=False,
-        response_format={"type": "json_object"})
+        response_format={"type": "json_object"},
+    )
     result = response.choices[0].message.content
     return result
 
