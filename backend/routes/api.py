@@ -173,3 +173,46 @@ def get_book_content(filename):
     except Exception as e:
         print(f"读取书籍内容失败: {e}", file=sys.stderr)
         return jsonify({'error': '读取书籍内容失败'}), 500
+
+
+def get_all_chapters():
+    """获取所有书籍的所有章节（按书名分组）的API端点"""
+    try:
+        # 查找所有.json文件
+        json_files = glob.glob(os.path.join(user_dir, "*.json"))
+
+        books_with_chapters = []
+
+        for file_path in sorted(json_files):
+            filename = os.path.basename(file_path)
+            book_name = os.path.splitext(filename)[0]
+
+            try:
+                # 读取书籍内容
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    chapters = json.load(f)
+
+                # 验证章节数据格式
+                if not isinstance(chapters, list):
+                    continue
+
+                # 过滤有效的章节（必须有Title和Content）
+                valid_chapters = [
+                    ch for ch in chapters if isinstance(ch, dict)
+                    and 'Title' in ch and 'Content' in ch
+                ]
+
+                if valid_chapters:
+                    books_with_chapters.append({
+                        'book_name': book_name,
+                        'chapters': valid_chapters
+                    })
+            except (json.JSONDecodeError, IOError):
+                # 跳过无法读取的文件
+                continue
+
+        return jsonify(books_with_chapters)
+
+    except Exception as e:
+        print(f"获取所有章节失败: {e}", file=sys.stderr)
+        return jsonify({'error': '获取所有章节失败'}), 500

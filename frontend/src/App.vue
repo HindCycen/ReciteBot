@@ -37,6 +37,13 @@
           >
             我的书籍
           </button>
+          <button
+            @click="goToAllChapters"
+            class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg transition-colors duration-200"
+            type="button"
+          >
+            所有章节
+          </button>
         </div>
 
         <div v-if="error" class="mt-4 text-red-500 text-center">
@@ -130,6 +137,13 @@
         @load-book="loadBookContent"
         @go-back="goBackToInput"
         @create-book="createNewBook"
+        @view-all-chapters="goToAllChapters"
+      />
+
+      <!-- 所有章节浏览页面 -->
+      <AllChapters
+        v-else-if="currentPage === 'all-chapters'"
+        @go-back="goBackToInput"
       />
     </div>
   </div>
@@ -139,6 +153,7 @@
 import { ref } from "vue";
 import ChapterCard from "./components/ChapterCard.vue";
 import BookList from "./components/BookList.vue";
+import AllChapters from "./components/AllChapters.vue";
 import { saveBook, getBookContent } from "./api";
 
 // 页面状态
@@ -271,5 +286,10 @@ const createNewBook = () => {
   bookName.value = "未命名书籍";
   chapters.value = [];
   currentPage.value = "editor";
+};
+
+// 跳转到所有章节浏览页面
+const goToAllChapters = () => {
+  currentPage.value = "all-chapters";
 };
 </script>

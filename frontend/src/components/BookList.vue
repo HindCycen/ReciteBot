@@ -13,6 +13,13 @@
               + 新建书籍
             </button>
             <button
+              @click="viewAllChapters"
+              class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              type="button"
+            >
+              所有章节
+            </button>
+            <button
               @click="goBackToInput"
               class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors duration-200"
               type="button"
@@ -69,7 +76,12 @@ import { ref, onMounted } from "vue";
 import { getBooksList } from "../api";
 
 // 定义props和emits
-const emit = defineEmits(["load-book", "go-back", "create-book"]);
+const emit = defineEmits([
+  "load-book",
+  "go-back",
+  "create-book",
+  "view-all-chapters",
+]);
 
 // 数据
 const books = ref([]);
@@ -105,6 +117,11 @@ const goBackToInput = () => {
 // 创建新书籍
 const createNewBook = () => {
   emit("create-book");
+};
+
+// 查看所有章节
+const viewAllChapters = () => {
+  emit("view-all-chapters");
 };
 
 // 组件挂载时获取书籍列表
