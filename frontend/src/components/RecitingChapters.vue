@@ -95,8 +95,12 @@
               ]"
             >
               <h2 class="text-2xl font-bold">{{ book.book_name }}</h2>
-              <p :class="showMode === 'due' ? 'text-green-100' : 'text-orange-100'"
-                class="text-sm mt-1">
+              <p
+                :class="
+                  showMode === 'due' ? 'text-green-100' : 'text-orange-100'
+                "
+                class="text-sm mt-1"
+              >
                 共 {{ book.chapters.length }} 个章节
               </p>
             </div>
@@ -139,8 +143,10 @@ const dueCounts = computed(() => {
 
 // 计算等待中的总数
 const waitingCounts = computed(() => {
-  return allBooks.value.reduce((sum, book) => sum + book.chapters.length, 0) -
-    dueCounts.value;
+  return (
+    allBooks.value.reduce((sum, book) => sum + book.chapters.length, 0) -
+    dueCounts.value
+  );
 });
 
 // 计算总章节数
@@ -170,8 +176,8 @@ const getWaitingBooks = () => {
       const waitingChapters = allBook.chapters.filter(
         (allChapter) =>
           !dueBook.chapters.some(
-            (dueChapter) => dueChapter.Title === allChapter.Title
-          )
+            (dueChapter) => dueChapter.Title === allChapter.Title,
+          ),
       );
 
       if (waitingChapters.length > 0) {
