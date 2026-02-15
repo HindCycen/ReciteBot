@@ -1,0 +1,99 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g., v1.0.0)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt 2>/dev/null || echo "No requirements.txt found"
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+          cd ..
+
+      - name: Prepare build directory
+        run: |
+          mkdir -p build
+          cp -r backend build/
+          cp -r frontend/dist build/frontend
+          cp -r user build/
+          cp start_prod.py build/
+          cp environment.yml build/
+          cp -r .venv build/ 2>/dev/null || echo "No .venv found"
+
+      - name: Create tarball
+        run: |
+          tar -czf recitebot.tar.gz build/
+
+      - name: Create zip archive
+        run: |
+          cd build
+          zip -r ../recitebot.zip . -x ".git/*" "__pycache__/*" "node_modules/*" ".venv/*"
+          cd ..
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION="nightly-$(date +%Y%m%d-%H%M%S)"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            recitebot.tar.gz
+            recitebot.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ReciteBot-${{ steps.get_version.outputs.VERSION }}
+          path: |
+            recitebot.tar.gz
+            recitebot.zip
+          retention-days: 30

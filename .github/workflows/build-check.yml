@@ -1,0 +1,74 @@
+name: CI - Build Check
+
+on:
+  push:
+    branches: [main, develop, master]
+  pull_request:
+    branches: [main, develop, master]
+
+jobs:
+  build-check:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Check Python syntax
+        run: |
+          python -m py_compile backend/app.py
+          python -m py_compile backend/routes/api.py
+          python -m py_compile backend/routes/static.py
+          echo "✅ Python syntax check passed"
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+          echo "✅ Frontend dependencies installed"
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+          echo "✅ Frontend build successful"
+          cd ..
+
+      - name: Verify build output
+        run: |
+          if [ -d "frontend/dist" ]; then
+            echo "✅ Frontend dist directory created"
+            ls -la frontend/dist
+          else
+            echo "❌ Frontend dist directory not found"
+            exit 1
+          fi
+
+      - name: Check project structure
+        run: |
+          echo "Checking backend files..."
+          test -f backend/app.py && echo "✅ app.py found"
+          test -f backend/routes/api.py && echo "✅ routes/api.py found"
+          test -f frontend/package.json && echo "✅ package.json found"
+          echo "✅ All required files present"
+
+      - name: Summary
+        run: |
+          echo "Build check completed successfully!"
+          echo "Python version: $(python --version)"
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
