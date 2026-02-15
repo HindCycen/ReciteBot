@@ -91,9 +91,12 @@
             :index="index"
             :is-first="index === 0"
             :is-last="index === chapters.length - 1"
+            :book-name="bookName"
+            :recite-list="reciteList"
             @delete="deleteChapter"
             @move-up="moveChapterUp"
             @move-down="moveChapterDown"
+            @update-recite-list="fetchReciteList"
           />
 
           <!-- 空状态提示 -->
@@ -150,7 +153,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import ChapterCard from "./components/ChapterCard.vue";
 import BookList from "./components/BookList.vue";
 import AllChapters from "./components/AllChapters.vue";
@@ -167,6 +170,21 @@ const error = ref("");
 // 章节编辑页面数据
 const bookName = ref("未命名书籍");
 const chapters = ref([]);
+
+// 背诵列表
+const reciteList = ref([]);
+
+// 获取背诵列表
+const fetchReciteList = async () => {
+  try {
+    const response = await fetch("/api/recite-list");
+    if (response.ok) {
+      reciteList.value = await response.json();
+    }
+  } catch (err) {
+    console.error("获取背诵列表失败:", err);
+  }
+};
 
 // 处理文本
 const processText = async () => {
@@ -276,6 +294,7 @@ const loadBookContent = async (filename) => {
     bookName.value = bookData.name;
     chapters.value = bookData.content;
     currentPage.value = "editor";
+    await fetchReciteList();
   } catch (err) {
     alert("加载书籍失败：" + err.message);
   }
@@ -286,10 +305,16 @@ const createNewBook = () => {
   bookName.value = "未命名书籍";
   chapters.value = [];
   currentPage.value = "editor";
+  fetchReciteList();
 };
 
 // 跳转到所有章节浏览页面
 const goToAllChapters = () => {
   currentPage.value = "all-chapters";
 };
+
+// 组件挂载时获取背诵列表
+onMounted(() => {
+  fetchReciteList();
+});
 </script>

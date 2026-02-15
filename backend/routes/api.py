@@ -216,3 +216,114 @@ def get_all_chapters():
     except Exception as e:
         print(f"获取所有章节失败: {e}", file=sys.stderr)
         return jsonify({'error': '获取所有章节失败'}), 500
+
+
+def _get_recite_list_path():
+    """获取背诵列表文件路径"""
+    list_dir = os.path.join(user_dir, 'list')
+    os.makedirs(list_dir, exist_ok=True)
+    return os.path.join(list_dir, 'recite_list.json')
+
+
+def _load_recite_list():
+    """加载背诵列表"""
+    recite_path = _get_recite_list_path()
+    if not os.path.exists(recite_path):
+        return []
+
+    try:
+        with open(recite_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError):
+        return []
+
+
+def _save_recite_list(recite_list):
+    """保存背诵列表"""
+    recite_path = _get_recite_list_path()
+    # 确保目录存在
+    os.makedirs(os.path.dirname(recite_path), exist_ok=True)
+    with open(recite_path, 'w', encoding='utf-8') as f:
+        json.dump(recite_list, f, ensure_ascii=False, indent=2)
+
+
+def get_recite_list():
+    """获取背诵列表的API端点"""
+    try:
+        recite_list = _load_recite_list()
+        return jsonify(recite_list)
+    except Exception as e:
+        print(f"获取背诵列表失败: {e}", file=sys.stderr)
+        return jsonify({'error': '获取背诵列表失败'}), 500
+
+
+def add_to_recite_list():
+    """添加章节到背诵列表的API端点"""
+    try:
+        data = request.get_json()
+        if not data or 'book_name' not in data or 'chapter_title' not in data:
+            return jsonify({'error': '缺少书籍名称或章节标题'}), 400
+
+        book_name = data['book_name'].strip()
+        chapter_title = data['chapter_title'].strip()
+
+        if not book_name or not chapter_title:
+            return jsonify({'error': '书籍名称和章节标题不能为空'}), 400
+
+        # 加载现有的背诵列表
+        recite_list = _load_recite_list()
+
+        # 创建唯一标识
+        item_id = f"{book_name}:{chapter_title}"
+
+        # 检查是否已经存在
+        if not any(item.get('id') == item_id for item in recite_list):
+            recite_list.append({
+                'id':
+                item_id,
+                'book_name':
+                book_name,
+                'chapter_title':
+                chapter_title,
+                'added_at':
+                __import__('datetime').datetime.now().isoformat()
+            })
+            _save_recite_list(recite_list)
+
+        return jsonify({'success': True, 'message': '已添加到背诵列表'})
+
+    except Exception as e:
+        print(f"添加到背诵列表失败: {e}", file=sys.stderr)
+        return jsonify({'error': '添加失败'}), 500
+
+
+def remove_from_recite_list():
+    """从背诵列表移除章节的API端点"""
+    try:
+        data = request.get_json()
+        if not data or 'book_name' not in data or 'chapter_title' not in data:
+            return jsonify({'error': '缺少书籍名称或章节标题'}), 400
+
+        book_name = data['book_name'].strip()
+        chapter_title = data['chapter_title'].strip()
+
+        if not book_name or not chapter_title:
+            return jsonify({'error': '书籍名称和章节标题不能为空'}), 400
+
+        # 加载现有的背诵列表
+        recite_list = _load_recite_list()
+
+        # 创建唯一标识
+        item_id = f"{book_name}:{chapter_title}"
+
+        # 移除该项
+        recite_list = [
+            item for item in recite_list if item.get('id') != item_id
+        ]
+        _save_recite_list(recite_list)
+
+        return jsonify({'success': True, 'message': '已从背诵列表移除'})
+
+    except Exception as e:
+        print(f"移除背诵列表项失败: {e}", file=sys.stderr)
+        return jsonify({'error': '移除失败'}), 500

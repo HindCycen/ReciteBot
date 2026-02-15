@@ -51,6 +51,9 @@
                   v-for="(chapter, index) in book.chapters"
                   :key="index"
                   :chapter="chapter"
+                  :book-name="book.book_name"
+                  :recite-list="reciteList"
+                  @update-recite-list="fetchReciteList"
                 />
               </div>
             </div>
@@ -68,8 +71,21 @@ import ReadOnlyChapterCard from "./ReadOnlyChapterCard.vue";
 const emit = defineEmits(["go-back"]);
 
 const books = ref([]);
+const reciteList = ref([]);
 const loading = ref(false);
 const error = ref("");
+
+// 获取背诵列表
+const fetchReciteList = async () => {
+  try {
+    const response = await fetch("/api/recite-list");
+    if (response.ok) {
+      reciteList.value = await response.json();
+    }
+  } catch (err) {
+    console.error("获取背诵列表失败:", err);
+  }
+};
 
 // 获取所有章节
 const fetchAllChapters = async () => {
@@ -102,5 +118,6 @@ const goBackToInput = () => {
 // 组件挂载时获取数据
 onMounted(() => {
   fetchAllChapters();
+  fetchReciteList();
 });
 </script>

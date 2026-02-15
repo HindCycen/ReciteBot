@@ -7,7 +7,7 @@ backend_dir = os.path.dirname(os.path.abspath(__file__))
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-from routes.api import process_text, save_book, get_books_list, get_book_content, get_all_chapters
+from routes.api import process_text, save_book, get_books_list, get_book_content, get_all_chapters, get_recite_list, add_to_recite_list, remove_from_recite_list
 from routes.static import serve_index, serve_static
 
 
@@ -25,6 +25,15 @@ def create_app():
     app.add_url_rule('/api/book/<filename>',
                      view_func=get_book_content,
                      methods=['GET'])
+    app.add_url_rule('/api/recite-list',
+                     view_func=get_recite_list,
+                     methods=['GET'])
+    app.add_url_rule('/api/recite-list/add',
+                     view_func=add_to_recite_list,
+                     methods=['POST'])
+    app.add_url_rule('/api/recite-list/remove',
+                     view_func=remove_from_recite_list,
+                     methods=['POST'])
 
     # 注册静态文件路由
     app.add_url_rule('/', view_func=serve_index, methods=['GET'])
