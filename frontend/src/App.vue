@@ -44,6 +44,13 @@
           >
             所有章节
           </button>
+          <button
+            @click="goToRecitingChapters"
+            class="bg-pink-500 hover:bg-pink-600 text-white px-6 py-2 rounded-lg transition-colors duration-200"
+            type="button"
+          >
+            正在背诵
+          </button>
         </div>
 
         <div v-if="error" class="mt-4 text-red-500 text-center">
@@ -141,12 +148,21 @@
         @go-back="goBackToInput"
         @create-book="createNewBook"
         @view-all-chapters="goToAllChapters"
+        @view-reciting-chapters="goToRecitingChapters"
       />
 
       <!-- 所有章节浏览页面 -->
       <AllChapters
         v-else-if="currentPage === 'all-chapters'"
         @go-back="goBackToInput"
+        @go-to-reciting-chapters="goToRecitingChapters"
+      />
+
+      <!-- 正在背诵的章节页面 -->
+      <RecitingChapters
+        v-else-if="currentPage === 'reciting-chapters'"
+        @go-back="goBackToInput"
+        @go-to-all-chapters="goToAllChapters"
       />
     </div>
   </div>
@@ -157,6 +173,7 @@ import { ref, onMounted } from "vue";
 import ChapterCard from "./components/ChapterCard.vue";
 import BookList from "./components/BookList.vue";
 import AllChapters from "./components/AllChapters.vue";
+import RecitingChapters from "./components/RecitingChapters.vue";
 import { saveBook, getBookContent } from "./api";
 
 // 页面状态
@@ -311,6 +328,11 @@ const createNewBook = () => {
 // 跳转到所有章节浏览页面
 const goToAllChapters = () => {
   currentPage.value = "all-chapters";
+};
+
+// 跳转到正在背诵的章节页面
+const goToRecitingChapters = () => {
+  currentPage.value = "reciting-chapters";
 };
 
 // 组件挂载时获取背诵列表

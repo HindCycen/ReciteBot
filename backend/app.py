@@ -16,6 +16,7 @@ from routes.api import (
     get_recite_list,
     add_to_recite_list,
     remove_from_recite_list,
+    get_reciting_chapters,
 )
 from routes.static import serve_index, serve_static
 
@@ -38,6 +39,9 @@ def create_app():
     )
     app.add_url_rule(
         "/api/recite-list/remove", view_func=remove_from_recite_list, methods=["POST"]
+    )
+    app.add_url_rule(
+        "/api/reciting-chapters", view_func=get_reciting_chapters, methods=["GET"]
     )
 
     # 注册静态文件路由

@@ -4,13 +4,22 @@
       <div class="bg-white rounded-lg shadow-md p-6">
         <div class="flex justify-between items-center mb-8">
           <h1 class="text-3xl font-bold">所有章节浏览</h1>
-          <button
-            @click="goBackToInput"
-            class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-            type="button"
-          >
-            返回
-          </button>
+          <div class="flex gap-2">
+            <button
+              @click="goToRecitingChapters"
+              class="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              type="button"
+            >
+              正在背诵
+            </button>
+            <button
+              @click="goBackToInput"
+              class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              type="button"
+            >
+              返回
+            </button>
+          </div>
         </div>
 
         <!-- 加载状态 -->
@@ -68,7 +77,7 @@
 import { ref, onMounted } from "vue";
 import ReadOnlyChapterCard from "./ReadOnlyChapterCard.vue";
 
-const emit = defineEmits(["go-back"]);
+const emit = defineEmits(["go-back", "go-to-reciting-chapters"]);
 
 const books = ref([]);
 const reciteList = ref([]);
@@ -113,6 +122,11 @@ const fetchAllChapters = async () => {
 // 返回上一页
 const goBackToInput = () => {
   emit("go-back");
+};
+
+// 跳转到正在背诵的章节
+const goToRecitingChapters = () => {
+  emit("go-to-reciting-chapters");
 };
 
 // 组件挂载时获取数据

@@ -319,3 +319,72 @@ def remove_from_recite_list():
     except Exception as e:
         print(f"移除背诵列表项失败: {e}", file=sys.stderr)
         return jsonify({"error": "移除失败"}), 500
+
+
+def get_reciting_chapters():
+    """获取所有背诵中的章节及其内容的API端点"""
+    try:
+        # 加载背诵列表
+        recite_list = _load_recite_list()
+
+        # 按书籍名分组
+        books_chapters = {}
+
+        for item in recite_list:
+            book_name = item.get("book_name")
+            chapter_title = item.get("chapter_title")
+
+            if not book_name or not chapter_title:
+                continue
+
+            # 尝试从文件中读取章节内容
+            safe_book_name = "".join(
+                c for c in book_name if c.isalnum() or c in (" ", "-", "_")
+            ).rstrip()
+            if not safe_book_name:
+                safe_book_name = "unnamed_book"
+
+            file_path = os.path.join(user_dir, f"{safe_book_name}.json")
+
+            try:
+                if not os.path.exists(file_path):
+                    continue
+
+                with open(file_path, "r", encoding="utf-8") as f:
+                    chapters = json.load(f)
+
+                # 查找匹配的章节
+                for chapter in chapters:
+                    if (
+                        isinstance(chapter, dict)
+                        and chapter.get("Title") == chapter_title
+                    ):
+                        if book_name not in books_chapters:
+                            books_chapters[book_name] = []
+
+                        books_chapters[book_name].append(
+                            {
+                                "Title": chapter.get("Title"),
+                                "Content": chapter.get("Content"),
+                                "added_at": item.get("added_at"),
+                            }
+                        )
+                        break
+            except (json.JSONDecodeError, IOError):
+                continue
+
+        # 转换为列表格式
+        result = []
+        for book_name, chapters in books_chapters.items():
+            result.append(
+                {
+                    "book_name": book_name,
+                    "chapters": chapters,
+                }
+            )
+
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"获取背诵章节失败: {e}", file=sys.stderr)
+        return jsonify({"error": "获取背诵章节失败"}), 500

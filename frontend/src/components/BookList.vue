@@ -6,23 +6,30 @@
           <h1 class="text-3xl font-bold">我的书籍</h1>
           <div class="space-x-2">
             <button
+              type="button"
               @click="createNewBook"
               class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-              type="button"
             >
               + 新建书籍
             </button>
             <button
+              type="button"
               @click="viewAllChapters"
               class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-              type="button"
             >
               所有章节
             </button>
             <button
+              type="button"
+              @click="viewRecitingChapters"
+              class="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+            >
+              正在背诵
+            </button>
+            <button
+              type="button"
               @click="goBackToInput"
               class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-              type="button"
             >
               返回AI处理
             </button>
@@ -49,9 +56,9 @@
           <p class="text-gray-500 text-lg">暂无书籍</p>
           <p class="text-gray-400 mt-2">保存的书籍将显示在这里</p>
           <button
+            type="button"
             @click="createNewBook"
             class="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors duration-200"
-            type="button"
           >
             创建你的第一本书籍
           </button>
@@ -75,12 +82,13 @@
 import { ref, onMounted } from "vue";
 import { getBooksList } from "../api";
 
-// 定义props和emits
+// 定义 emits
 const emit = defineEmits([
   "load-book",
   "go-back",
   "create-book",
   "view-all-chapters",
+  "view-reciting-chapters",
 ]);
 
 // 数据
@@ -109,7 +117,7 @@ const loadBook = (filename) => {
   emit("load-book", filename);
 };
 
-// 返回AI处理页面
+// 返回 AI 处理页面
 const goBackToInput = () => {
   emit("go-back");
 };
@@ -122,6 +130,11 @@ const createNewBook = () => {
 // 查看所有章节
 const viewAllChapters = () => {
   emit("view-all-chapters");
+};
+
+// 查看正在背诵的章节
+const viewRecitingChapters = () => {
+  emit("view-reciting-chapters");
 };
 
 // 组件挂载时获取书籍列表
