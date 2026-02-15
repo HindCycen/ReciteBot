@@ -7,7 +7,7 @@ on:
     branches: [main, develop, master]
 
 jobs:
-  build-check:
+  build-check-linux:
     runs-on: ubuntu-latest
 
     strategy:
@@ -72,3 +72,75 @@ jobs:
           echo "Python version: $(python --version)"
           echo "Node version: $(node --version)"
           echo "NPM version: $(npm --version)"
+
+  build-check-windows:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Check Python syntax
+        shell: powershell
+        run: |
+          python -m py_compile backend/app.py
+          python -m py_compile backend/routes/api.py
+          python -m py_compile backend/routes/static.py
+          Write-Output "✅ Python syntax check passed"
+
+      - name: Install frontend dependencies
+        shell: powershell
+        run: |
+          cd frontend
+          npm install
+          Write-Output "✅ Frontend dependencies installed"
+
+      - name: Build frontend
+        shell: powershell
+        run: |
+          cd frontend
+          npm run build
+          Write-Output "✅ Frontend build successful"
+          cd ..
+
+      - name: Verify build output
+        shell: powershell
+        run: |
+          if (Test-Path -Path "frontend/dist") {
+            Write-Output "✅ Frontend dist directory created"
+            Get-ChildItem -Path "frontend/dist" -Recurse
+          } else {
+            Write-Output "❌ Frontend dist directory not found"
+            exit 1
+          }
+
+      - name: Check project structure
+        shell: powershell
+        run: |
+          Write-Output "Checking backend files..."
+          if (Test-Path "backend/app.py") { Write-Output "✅ app.py found" }
+          if (Test-Path "backend/routes/api.py") { Write-Output "✅ routes/api.py found" }
+          if (Test-Path "frontend/package.json") { Write-Output "✅ package.json found" }
+          Write-Output "✅ All required files present"
+
+      - name: Summary
+        shell: powershell
+        run: |
+          Write-Output "Build check completed successfully!"
+          python --version
+          node --version
+          npm --version

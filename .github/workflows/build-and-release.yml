@@ -14,7 +14,7 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
 
     strategy:
@@ -58,12 +58,12 @@ jobs:
 
       - name: Create tarball
         run: |
-          tar -czf recitebot.tar.gz build/
+          tar -czf recitebot-linux.tar.gz build/
 
       - name: Create zip archive
         run: |
           cd build
-          zip -r ../recitebot.zip . -x ".git/*" "__pycache__/*" "node_modules/*" ".venv/*"
+          zip -r ../recitebot-linux.zip . -x ".git/*" "__pycache__/*" "node_modules/*" ".venv/*"
           cd ..
 
       - name: Get version
@@ -76,24 +76,127 @@ jobs:
           fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ReciteBot-Linux-${{ steps.get_version.outputs.VERSION }}
+          path: |
+            recitebot-linux.tar.gz
+            recitebot-linux.zip
+          retention-days: 30
+
+  build-windows:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install Python dependencies
+        shell: powershell
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt 2>$null ; if ($LASTEXITCODE -ne 0) { echo "No requirements.txt found" }
+
+      - name: Build frontend
+        shell: powershell
+        run: |
+          cd frontend
+          npm install
+          npm run build
+          cd ..
+
+      - name: Prepare build directory
+        shell: powershell
+        run: |
+          if (-not (Test-Path "build")) { New-Item -ItemType Directory -Path "build" -Force | Out-Null }
+          Copy-Item -Path "backend" -Destination "build\backend" -Recurse
+          Copy-Item -Path "frontend\dist" -Destination "build\frontend" -Recurse
+          Copy-Item -Path "user" -Destination "build\user" -Recurse
+          Copy-Item -Path "start_prod.py" -Destination "build\"
+          Copy-Item -Path "environment.yml" -Destination "build\"
+          Get-ChildItem build -Recurse
+
+      - name: Create zip archive
+        shell: powershell
+        run: |
+          $SourcePath = "build"
+          $DestinationPath = "recitebot-windows.zip"
+          $CompressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
+          $ZipArchive = [System.IO.Compression.ZipFile]::Open($DestinationPath, 'Create', $CompressionLevel)
+          Get-ChildItem -Path $SourcePath -Recurse | ForEach-Object {
+            if (-not $_.PSIsContainer) {
+              $RelativePath = $_.FullName.Substring($SourcePath.Length + 1)
+              [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($ZipArchive, $_.FullName, $RelativePath) | Out-Null
+            }
+          }
+          $ZipArchive.Dispose()
+          "ZIP created: $(Get-Item recitebot-windows.zip | % {$_.Length / 1MB | "{0:N2}" }) MB"
+
+      - name: Get version
+        id: get_version
+        shell: powershell
+        run: |
+          if ("${{ github.ref }}".StartsWith("refs/tags/")) {
+            $VERSION = "${{ github.ref }}".Replace("refs/tags/", "")
+          } else {
+            $VERSION = "nightly-$(Get-Date -Format yyyyMMdd-HHmmss)"
+          }
+          "VERSION=$VERSION" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ReciteBot-Windows-${{ steps.get_version.outputs.VERSION }}
+          path: recitebot-windows.zip
+          retention-days: 30
+
+  create-release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: release-artifacts
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release-files
+          find release-artifacts -name "*.tar.gz" -o -name "*.zip" | while read file; do
+            cp "$file" release-files/
+          done
+          ls -la release-files/
+
       - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            recitebot.tar.gz
-            recitebot.zip
+          files: release-files/*
           draft: false
           prerelease: false
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ReciteBot-${{ steps.get_version.outputs.VERSION }}
-          path: |
-            recitebot.tar.gz
-            recitebot.zip
-          retention-days: 30

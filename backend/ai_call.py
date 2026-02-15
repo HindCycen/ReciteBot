@@ -40,13 +40,9 @@ def process_text(prompt: str) -> str | None:
         messages=[
             {
                 "role": "system",
-                "content":
-                "You are an assistant that organizes study materials.",
+                "content": "You are an assistant that organizes study materials.",
             },
-            {
-                "role": "user",
-                "content": prompt
-            },
+            {"role": "user", "content": prompt},
         ],
         max_tokens=8192,
         temperature=0.7,
