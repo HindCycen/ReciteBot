@@ -82,7 +82,11 @@
             :key="index"
             :chapter="chapter"
             :index="index"
+            :is-first="index === 0"
+            :is-last="index === chapters.length - 1"
             @delete="deleteChapter"
+            @move-up="moveChapterUp"
+            @move-down="moveChapterDown"
           />
 
           <!-- 空状态提示 -->
@@ -125,6 +129,7 @@
         v-else-if="currentPage === 'book-list'"
         @load-book="loadBookContent"
         @go-back="goBackToInput"
+        @create-book="createNewBook"
       />
     </div>
   </div>
@@ -207,6 +212,23 @@ const deleteChapter = (index) => {
   chapters.value.splice(index, 1);
 };
 
+// 移动章节
+const moveChapterUp = (index) => {
+  if (index > 0) {
+    const temp = chapters.value[index];
+    chapters.value[index] = chapters.value[index - 1];
+    chapters.value[index - 1] = temp;
+  }
+};
+
+const moveChapterDown = (index) => {
+  if (index < chapters.value.length - 1) {
+    const temp = chapters.value[index];
+    chapters.value[index] = chapters.value[index + 1];
+    chapters.value[index + 1] = temp;
+  }
+};
+
 // 保存逻辑
 const handleSave = async () => {
   if (chapters.value.length === 0) {
@@ -242,5 +264,12 @@ const loadBookContent = async (filename) => {
   } catch (err) {
     alert("加载书籍失败：" + err.message);
   }
+};
+
+// 创建新书籍
+const createNewBook = () => {
+  bookName.value = "未命名书籍";
+  chapters.value = [];
+  currentPage.value = "editor";
 };
 </script>

@@ -4,13 +4,22 @@
       <div class="bg-white rounded-lg shadow-md p-6">
         <div class="flex justify-between items-center mb-8">
           <h1 class="text-3xl font-bold">我的书籍</h1>
-          <button
-            @click="goBackToInput"
-            class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-            type="button"
-          >
-            返回AI处理
-          </button>
+          <div class="space-x-2">
+            <button
+              @click="createNewBook"
+              class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              type="button"
+            >
+              + 新建书籍
+            </button>
+            <button
+              @click="goBackToInput"
+              class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              type="button"
+            >
+              返回AI处理
+            </button>
+          </div>
         </div>
 
         <!-- 书籍列表 -->
@@ -32,6 +41,13 @@
         <div v-else class="text-center py-12">
           <p class="text-gray-500 text-lg">暂无书籍</p>
           <p class="text-gray-400 mt-2">保存的书籍将显示在这里</p>
+          <button
+            @click="createNewBook"
+            class="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors duration-200"
+            type="button"
+          >
+            创建你的第一本书籍
+          </button>
         </div>
 
         <!-- 加载状态 -->
@@ -53,7 +69,7 @@ import { ref, onMounted } from "vue";
 import { getBooksList } from "../api";
 
 // 定义props和emits
-const emit = defineEmits(["load-book", "go-back"]);
+const emit = defineEmits(["load-book", "go-back", "create-book"]);
 
 // 数据
 const books = ref([]);
@@ -84,6 +100,11 @@ const loadBook = (filename) => {
 // 返回AI处理页面
 const goBackToInput = () => {
   emit("go-back");
+};
+
+// 创建新书籍
+const createNewBook = () => {
+  emit("create-book");
 };
 
 // 组件挂载时获取书籍列表

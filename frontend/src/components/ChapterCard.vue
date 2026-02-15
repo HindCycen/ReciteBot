@@ -1,13 +1,40 @@
 <template>
   <div
-    class="relative group bg-gray-50 border-l-4 border-blue-500 rounded-lg p-4 hover:-translate-y-1 hover:shadow-lg transition-all duration-200"
+    :class="[
+      'relative group bg-gray-50 border-l-4 border-blue-500 rounded-lg p-4 hover:-translate-y-1 hover:shadow-lg transition-all duration-200'
+    ]"
   >
-    <button
-      @click="$emit('delete', index)"
-      class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center transition-opacity"
-    >
-      ×
-    </button>
+    <!-- 删除和移动按钮区域 -->
+    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
+      <!-- 向上移动按钮 -->
+      <button
+        v-if="!isFirst"
+        @click="$emit('move-up', index)"
+        class="bg-blue-500 hover:bg-blue-600 text-white rounded w-6 h-6 flex items-center justify-center transition-colors"
+        title="上移"
+      >
+        ↑
+      </button>
+      
+      <!-- 向下移动按钮 -->
+      <button
+        v-if="!isLast"
+        @click="$emit('move-down', index)"
+        class="bg-blue-500 hover:bg-blue-600 text-white rounded w-6 h-6 flex items-center justify-center transition-colors"
+        title="下移"
+      >
+        ↓
+      </button>
+
+      <!-- 删除按钮 -->
+      <button
+        @click="$emit('delete', index)"
+        class="bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center transition-colors"
+        title="删除"
+      >
+        ×
+      </button>
+    </div>
 
     <input
       v-model="chapter.Title"
@@ -34,7 +61,15 @@ defineProps({
     type: Number,
     required: true,
   },
+  isFirst: {
+    type: Boolean,
+    default: false,
+  },
+  isLast: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-defineEmits(["delete"]);
+defineEmits(["delete", "move-up", "move-down"]);
 </script>
