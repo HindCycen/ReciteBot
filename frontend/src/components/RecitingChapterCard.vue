@@ -15,23 +15,43 @@
           {{ formatDate(chapter.next_review_at) }}
         </p>
       </div>
-      <button
-        @click="markAsMemorized"
-        class="px-3 py-1 rounded text-sm font-medium transition-colors whitespace-nowrap ml-2 bg-green-500 hover:bg-green-600 text-white"
-        title="标记为背过了"
-        :disabled="isUpdating"
-      >
-        {{ isUpdating ? "处理中..." : "✓ 背过了" }}
-      </button>
+      <div class="flex gap-2 ml-2">
+        <button
+          @click="showStrategyChanger = true"
+          class="px-3 py-1 rounded text-sm font-medium transition-colors whitespace-nowrap bg-blue-500 hover:bg-blue-600 text-white"
+          title="修改复习周期"
+          :disabled="isUpdating"
+        >
+          🔄 周期
+        </button>
+        <button
+          @click="markAsMemorized"
+          class="px-3 py-1 rounded text-sm font-medium transition-colors whitespace-nowrap bg-green-500 hover:bg-green-600 text-white"
+          title="标记为背过了"
+          :disabled="isUpdating"
+        >
+          {{ isUpdating ? "处理中..." : "✓ 背过了" }}
+        </button>
+      </div>
     </div>
     <p class="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
       {{ chapter.Content }}
     </p>
+
+    <!-- 策略修改模态框 -->
+    <StrategyChanger
+      :is-open="showStrategyChanger"
+      :chapter-title="chapter.Title"
+      :current-strategy="chapter.strategy || 'standard'"
+      @confirm="handleStrategyChange"
+      @cancel="showStrategyChanger = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
+import StrategyChanger from "./StrategyChanger.vue";
 
 const props = defineProps({
   chapter: {
@@ -47,6 +67,7 @@ const props = defineProps({
 const emit = defineEmits(["memorized"]);
 
 const isUpdating = ref(false);
+const showStrategyChanger = ref(false);
 
 // 格式化日期
 const formatDate = (dateString) => {
@@ -88,6 +109,43 @@ const markAsMemorized = async () => {
   } catch (err) {
     console.error("标记章节失败:", err);
     alert("标记失败: " + err.message);
+  } finally {
+    isUpdating.value = false;
+  }
+};
+
+// 处理策略修改
+const handleStrategyChange = async (strategy) => {
+  isUpdating.value = true;
+  try {
+    const response = await fetch("/api/recite-list/change-strategy", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        book_name: props.bookName,
+        chapter_title: props.chapter.Title,
+        strategy: strategy,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "修改策略失败");
+    }
+
+    const result = await response.json();
+    alert(
+      `✓ 已修改复习策略\n新策略: ${strategy}\n新周期: ${result.review_cycle_days} 天\n下次复习: ${formatDate(result.next_review_at)}`,
+    );
+
+    showStrategyChanger.value = false;
+    // 通知父组件刷新列表
+    emit("memorized");
+  } catch (err) {
+    console.error("修改策略失败:", err);
+    alert("修改策略失败: " + err.message);
   } finally {
     isUpdating.value = false;
   }

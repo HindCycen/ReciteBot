@@ -5,7 +5,13 @@ import json
 from datetime import datetime
 from flask import request, jsonify
 from .utils import USER_DIR, get_safe_filename, get_recite_list_path
-from .ebbinghaus import calculate_next_review_time, is_time_to_review
+from .ebbinghaus import (
+    calculate_next_review_time,
+    is_time_to_review,
+    get_strategy_info,
+    get_completion_estimate,
+    get_time_until_next_review,
+)
 
 
 def load_recite_list():
@@ -41,7 +47,12 @@ def get_recite_list():
 
 
 def add_to_recite_list():
-    """添加章节到背诵列表的API端点"""
+    """添加章节到背诵列表的API端点
+
+    支持参数:
+        - strategy: 复习策略 ('aggressive', 'balanced', 'standard')
+                   默认为 'standard'
+    """
     try:
         data = request.get_json()
         if not data or "book_name" not in data or "chapter_title" not in data:
@@ -49,6 +60,7 @@ def add_to_recite_list():
 
         book_name = data["book_name"].strip()
         chapter_title = data["chapter_title"].strip()
+        strategy = data.get("strategy", "standard")  # 获取复习策略，默认使用 'standard'
 
         if not book_name or not chapter_title:
             return jsonify({"error": "书籍名称和章节标题不能为空"}), 400
@@ -67,6 +79,7 @@ def add_to_recite_list():
                     "id": item_id,
                     "book_name": book_name,
                     "chapter_title": chapter_title,
+                    "strategy": strategy,  # 保存选择的复习策略
                     "added_at": now,
                     "review_count": 0,
                     "last_reviewed_at": None,
@@ -75,7 +88,19 @@ def add_to_recite_list():
             )
             save_recite_list(recite_list)
 
-        return jsonify({"success": True, "message": "已添加到背诵列表"})
+            # 返回策略信息
+            strategy_info = get_strategy_info(strategy)
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "已添加到背诵列表",
+                    "strategy": strategy,
+                    "strategy_description": strategy_info["description"],
+                    "review_cycle_days": strategy_info["cycle_days"],
+                }
+            )
+
+        return jsonify({"success": True, "message": "该章节已在背诵列表中"})
 
     except Exception as e:
         print(f"添加到背诵列表失败: {e}", file=__import__("sys").stderr)
@@ -138,17 +163,29 @@ def mark_chapter_as_memorized():
                 item["review_count"] = item.get("review_count", 0) + 1
                 # 更新最后复习时间
                 item["last_reviewed_at"] = datetime.now().isoformat()
+                # 获取该章节使用的复习策略
+                strategy = item.get("strategy", "standard")
                 # 根据艾宾浩斯曲线计算下次复习时间
                 item["next_review_at"] = calculate_next_review_time(
-                    item["review_count"]
+                    item["review_count"], strategy=strategy
                 )
                 save_recite_list(recite_list)
+
+                # 获取完成度信息
+                completion = get_completion_estimate(
+                    item["review_count"], strategy=strategy
+                )
+                time_until_review = get_time_until_next_review(item["next_review_at"])
+
                 return jsonify(
                     {
                         "success": True,
                         "message": "已标记为背过，下次复习时间已更新",
                         "next_review_at": item["next_review_at"],
                         "review_count": item["review_count"],
+                        "strategy": strategy,
+                        "completion": completion,
+                        "time_until_next_review": time_until_review,
                     }
                 )
 
@@ -295,3 +332,100 @@ def get_all_reciting_chapters():
     except Exception as e:
         print(f"获取所有背诵章节失败: {e}", file=__import__("sys").stderr)
         return jsonify({"error": "获取所有背诵章节失败"}), 500
+
+
+def get_review_strategies():
+    """获取所有可用的复习策略
+
+    返回所有支持的复习策略及其详细信息
+    """
+    try:
+        from .utils import EBBINGHAUS_STRATEGIES
+
+        strategies = []
+        for strategy_name, strategy_info in EBBINGHAUS_STRATEGIES.items():
+            strategies.append(
+                {
+                    "name": strategy_name,
+                    "description": strategy_info["description"],
+                    "cycle_days": strategy_info["cycle_days"],
+                    "intervals": strategy_info["intervals"],
+                    "total_reviews": len(strategy_info["intervals"]),
+                }
+            )
+
+        return jsonify(
+            {
+                "strategies": strategies,
+                "default_strategy": "standard",
+            }
+        )
+    except Exception as e:
+        print(f"获取复习策略失败: {e}", file=__import__("sys").stderr)
+        return jsonify({"error": "获取复习策略失败"}), 500
+
+
+def change_recite_strategy():
+    """修改背诵项目的复习策略并重新计算复习时间
+
+    支持参数:
+        - book_name: 书籍名称
+        - chapter_title: 章节标题
+        - strategy: 新的复习策略 ('aggressive', 'balanced', 'standard')
+    """
+    try:
+        data = request.get_json()
+        if (
+            not data
+            or "book_name" not in data
+            or "chapter_title" not in data
+            or "strategy" not in data
+        ):
+            return jsonify({"error": "缺少必要参数"}), 400
+
+        book_name = data["book_name"].strip()
+        chapter_title = data["chapter_title"].strip()
+        new_strategy = data["strategy"].strip()
+
+        if not book_name or not chapter_title or not new_strategy:
+            return jsonify({"error": "参数不能为空"}), 400
+
+        # 加载现有的背诵列表
+        recite_list = load_recite_list()
+
+        # 创建唯一标识
+        item_id = f"{book_name}:{chapter_title}"
+
+        # 找到并更新该项
+        for item in recite_list:
+            if item.get("id") == item_id:
+                old_strategy = item.get("strategy", "standard")
+                item["strategy"] = new_strategy
+
+                # 保持当前的复习次数，但用新策略重新计算下次复习时间
+                item["next_review_at"] = calculate_next_review_time(
+                    item.get("review_count", 0), strategy=new_strategy
+                )
+                save_recite_list(recite_list)
+
+                strategy_info = get_strategy_info(new_strategy)
+
+                return jsonify(
+                    {
+                        "success": True,
+                        "message": f"已将复习策略从 {old_strategy} 更改为 {new_strategy}",
+                        "book_name": book_name,
+                        "chapter_title": chapter_title,
+                        "old_strategy": old_strategy,
+                        "new_strategy": new_strategy,
+                        "strategy_description": strategy_info["description"],
+                        "next_review_at": item["next_review_at"],
+                        "review_cycle_days": strategy_info["cycle_days"],
+                    }
+                )
+
+        return jsonify({"error": "章节不存在"}), 404
+
+    except Exception as e:
+        print(f"修改复习策略失败: {e}", file=__import__("sys").stderr)
+        return jsonify({"error": "修改复习策略失败"}), 500

@@ -19,6 +19,8 @@ from routes.api import (
     get_reciting_chapters,
     get_all_reciting_chapters,
     mark_chapter_as_memorized,
+    get_review_strategies,
+    change_recite_strategy,
 )
 from routes.static import serve_index, serve_static
 
@@ -53,6 +55,16 @@ def create_app():
     app.add_url_rule(
         "/api/recite-list/memorized",
         view_func=mark_chapter_as_memorized,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/review-strategies",
+        view_func=get_review_strategies,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/recite-list/change-strategy",
+        view_func=change_recite_strategy,
         methods=["POST"],
     )
 

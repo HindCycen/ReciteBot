@@ -14,6 +14,8 @@ from .recite import (
     mark_chapter_as_memorized,
     get_reciting_chapters,
     get_all_reciting_chapters,
+    get_review_strategies,
+    change_recite_strategy,
 )
 
 # 导出所有API端点函数，供app.py导入
@@ -29,4 +31,6 @@ __all__ = [
     "mark_chapter_as_memorized",
     "get_reciting_chapters",
     "get_all_reciting_chapters",
+    "get_review_strategies",
+    "change_recite_strategy",
 ]
