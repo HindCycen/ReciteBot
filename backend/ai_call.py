@@ -14,6 +14,7 @@ client = OpenAI(api_key=api_key, base_url=base_url)
 def build_prompt(input_text: str) -> str:
     prompt = f"""
 Please split the following text into chapters.
+You can rearrange the format and/or add explanations if needed.
 
 For each chapter provide:
 - Title
