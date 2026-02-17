@@ -36,7 +36,7 @@ Text:
 
 def process_text(prompt: str) -> str | None:
     response = client.chat.completions.create(
-        model="deepseek-chat",
+        model="deepseek-reasoner",
         messages=[
             {
                 "role": "system",
@@ -44,7 +44,7 @@ def process_text(prompt: str) -> str | None:
             },
             {"role": "user", "content": prompt},
         ],
-        max_tokens=8192,
+        max_tokens=64000,
         temperature=0.7,
         stream=False,
         response_format={"type": "json_object"},
